@@ -1,51 +1,148 @@
 (ns game.config
-  (:require [game.canvas :as c])
+  (:require [game.canvas :as c]
+            [game.utils :as u]
+            [game.constants :as C]
+            )
   )
 
-;CONSTANTS
-(defonce OBJECT-SIZE (.round js/Math (* (/ 5 100) c/WIDTH)))
-(defonce PLAYER-WIDTH (.round js/Math (* (/ 25 100) c/WIDTH)))
-(defonce PLAYER-HEIGHT (.round js/Math (* (/ 8 100) c/HEIGHT)))
-(defonce INITIAL-LIVES 30)
+;Moving patterns
+(defn linear-move
+  [object, t-diff]
+  (let [{:keys [y time-to-travel pixels-to-travel]} object
+        diff-factor  (/ t-diff time-to-travel)
+        pixels-to-move (* diff-factor pixels-to-travel)
+        new-y (+ y pixels-to-move)
+        ]
+    (conj object
+          {
+           :y new-y
+           :time-to-travel (- time-to-travel t-diff)
+           :pixels-to-travel (- pixels-to-travel pixels-to-move)
+           }
+          )
+    )
+  )
 
-(defonce falling-objects-config {
-                                 :lambda {
-                                          :speed-range [1500 2500]
-                                          :img (.getElementById js/document "lambdaImage")
-                                          :good? true
-                                          }
-                                 :bug {
-                                       :speed-range [1200 1800]
-                                       :img (.getElementById js/document "bugImage")
-                                       :good? false
-                                       }
-                                 :rock {
-                                       :speed-range [600 1000]
-                                       :img (.getElementById js/document "rockImage")
-                                        :good? false
-                                       }
-                                 })
+;Falling Objects
+(defprotocol FallingObject
+  "Interface for falling objects"
+  (moveObject [this t-diff] "Move for a single frame")
+  (whenObjectCaught [this state] "Receives object that was caught and current state. Returns new game state")
+  (whenObjectDrop [this state] "Receives object that was dropped and current state. Returns new game state")
+  )
+
+(defrecord Lambda [x y time-to-travel pixels-to-travel]
+  FallingObject
+  (moveObject [this t-diff] (linear-move this t-diff))
+  (whenObjectCaught [_ state] (update-in state [:score] + C/GOOD-CATCH-SCORE-INCREASE))
+  (whenObjectDrop [_ state] (update-in state [:lives] dec))
+  )
+
+(defrecord Bug [x y time-to-travel pixels-to-travel]
+  FallingObject
+  (moveObject [this t-diff] (linear-move this t-diff))
+  (whenObjectCaught [_ state] (let [s (update-in state [:player :w] - C/PLAYER-WIDTH-CHANGE)]
+                                      (update-in s [:score] + C/BAD-CATCH-SCORE-INCREASE)
+                                   ))
+  (whenObjectDrop [_ state] state)
+  )
+
+(defrecord Rock [x y time-to-travel pixels-to-travel]
+  FallingObject
+  (moveObject [this t-diff] (linear-move this t-diff))
+  (whenObjectCaught [_ state] (update-in state [:player :w] - C/PLAYER-WIDTH-CHANGE))
+  (whenObjectDrop [_ state] state)
+  )
+
+(defonce OBJECT-CONSTANTS {
+                           Lambda {
+                                   :speed-range [1300 2200]
+                                   :img C/LAMBDA-OBJECT-IMG
+                                   :good? true
+                                   }
+                           Bug {
+                                :speed-range [900 1500]
+                                :img C/BUG-OBJECT-IMG
+                                :good? false
+                                }
+                           Rock {
+                                 :speed-range [500 700]
+                                 :img C/ROCK-OBJECT-IMG
+                                 :good? false
+                                 }
+                           })
+(defonce constructors
+         {
+          Bug map->Bug
+          Lambda map->Lambda
+          Rock map->Rock
+          }
+         )
+
+(defn- get-constant-for-type
+  [constant type]
+  (constant (get OBJECT-CONSTANTS type))
+  )
+(defn construct-object
+  [object-type data]
+  (println object-type data)
+  ((get constructors object-type) data)
+  )
+(defn get-object-speed-range
+  [object-type]
+  (get-constant-for-type :speed-range object-type)
+  )
+
+(defn get-object-image
+  [object-type]
+  (get-constant-for-type :img object-type)
+  )
+
+(defn good-object?
+  [object-type]
+  (get-constant-for-type :good? object-type)
+  )
+
+(defn create-object
+  [{objects :objects speed-factor :speed-factor}]
+  (let [
+        object-types (keys objects)
+        object-type (u/pick-random-el object-types)
+        speed-range (get-object-speed-range object-type)
+        [a b] speed-range
+        base-speed (u/rand-interval a b)
+        speed (- base-speed speed-factor)
+        x (rand (- c/WIDTH C/OBJECT-SIZE))
+        ]
+
+    (construct-object object-type {:x x
+                                   :y 0
+                                   :time-to-travel speed
+                                   :pixels-to-travel c/HEIGHT
+                                  })
+    )
+  )
 
 (defonce levels-config [
                         {
-                         :objects {:bug 500 :lambda 500}
+                         :objects {Bug 1 Lambda 1}
                          :speed-factor 0
-                         :object-gen-interval [150 200]
-                         }
-                        {
-                         :objects {:bug 10 :lambda 15 :rock 5}
-                         :speed-factor 100
                          :object-gen-interval [1200 1800]
                          }
                         {
-                         :objects {:bug 25 :lambda 20 :rock 20}
-                         :speed-factor 200
-                         :object-gen-interval [600 1600]
+                         :objects {Bug 1 Lambda 1 Rock 5}
+                         :speed-factor 100
+                         :object-gen-interval [900 1500]
                          }
                         {
-                         :objects {:bug 25 :lambda 25 :rock 25}
+                         :objects {Bug 2 Lambda 2 Rock 2}
+                         :speed-factor 200
+                         :object-gen-interval [400 1200]
+                         }
+                        {
+                         :objects {Bug 2 Lambda 2 Rock 2}
                          :speed-factor 300
-                         :object-gen-interval [400 1000]
+                         :object-gen-interval [300 700]
                          }
                         ])
 

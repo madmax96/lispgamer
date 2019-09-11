@@ -1,113 +1,118 @@
 (ns game.core
     (:require [game.canvas :as c]
               [game.utils :as u]
-              [game.events :as e]
+              [game.sound :as s]
               [game.config :as config]
               [game.state :as state]
               [reagent.core :as r]
+              [game.predicates :as pred]
+              [game.constants :as C]
               )
     )
 
 (enable-console-print!)
 
-(defonce PLAY-BUTTON (.getElementById js/document "play"))
-(defonce NEXT-LEVEL-BUTTON (.getElementById js/document "nextLevel"))
+;(defn create-object
+;    [t {level-state :level-state :as state}]
+;    (let [new-object (config/create-object level-state)
+;          object-type (type new-object)
+;          objects (:objects level-state)
+;          new-state (update-in state [:falling-objects] conj new-object)
+;          ]
+;
+;        (if (= 1 (get objects object-type))
+;            (swap! state/level-state update-in [:objects] dissoc object-type)
+;            (swap! state/level-state update-in [:objects] update object-type dec)
+;            )
+;        (state/set-last-object-created-timestamp t)
+;        new-object
+;        )
+;    )
 
-(defn filter-and-handle
-    [obj]
-    (if (state/object-at-boundary? obj)
-        (if (state/object-lost? obj)
-            (do
-                (e/handle-object-lost obj)
-                false
-                )
-            (do
-                (e/handle-object-caught obj)
-                false
-                )
-            )
-        true
-        )
-    )
-
-(defn update-object
-    [obj t-diff]
-    (let [{:keys [y time-to-travel pixels-to-travel]} obj
-          diff-factor  (/ t-diff time-to-travel)
-          pixels-to-move (* diff-factor pixels-to-travel)
-          new-y (+ y pixels-to-move)
-          ]
-        (conj obj
-              {
-               :y new-y
-               :time-to-travel (- time-to-travel t-diff)
-               :pixels-to-travel (- pixels-to-travel pixels-to-move)
-               }
-              )
-        )
-    )
-
+;(defn filter-and-handle
+;    [obj]
+;    (if (pred/object-at-boundary? obj (state/get-state))
+;        (if (pred/object-lost? obj (state/get-state))
+;            (do
+;                (state/set-state (config/whenObjectDrop obj (state/get-state)))
+;                (s/object-lost obj)
+;                false
+;                )
+;            (do
+;                (state/set-state (config/whenObjectCaught obj (state/get-state)))
+;                (s/object-caught obj)
+;                false
+;                )
+;            )
+;        true
+;        )
+;    )
+;TODO Refactor game playing? paused? ... can i use one variable ?
 (defn update-falling-objects
-    [t]
-    (let [time-difference (- t @state/last-timestamp)]
-        (println "t diff" time-difference)
-            ;filter falling objects and emmit corresponding events
-            (state/set-falling-objects
-                (map
-                    (fn [obj]
-                        (update-object obj time-difference))
-                    (filter filter-and-handle @state/falling-objects)
-                    )
+    [t {:keys [last-timestamp falling-objects level-state] :as state}]
+    (let [time-difference (- t last-timestamp)
+          {at-boundary true safe false} (group-by #(pred/object-at-boundary? % state) falling-objects)
+          {droped true caught false} (group-by #(pred/object-lost? % state) at-boundary)
+          moved-falling-objects  (map
+                                        (fn [obj]
+                                            (config/moveObject obj time-difference))
+                                        safe
+                                        )
+          ;Update all state that needs to be updated
+          ]
+        (if (pred/create-object? t state)
+            (let [new-object (config/create-object level-state)]
+                (s/object-created new-object)
+                ;(conj )
                 )
-        )
-    (if (state/create-object? t)
-        (let [new-object (state/create-object t)]
-            (e/handle-object-created new-object)
             )
         )
     )
 
 ;Drawing
 (defn draw-player
-    []
-    (let [{ x :x y :y w :w h :h img :img } @state/player]
+    [{player :player}]
+    (let [{ x :x y :y w :w h :h img :img } player]
         (c/draw-image img x y w h)
         )
+    nil
     )
 
 (defn draw-falling-objects
-    [t]
-    (update-falling-objects t)
-    (doseq [{:keys [img x y]} @state/falling-objects]
-        (c/draw-image img x y config/OBJECT-SIZE config/OBJECT-SIZE)
+    [{falling-objects :falling-objects}]
+    (doseq [{:keys [x y] :as O} falling-objects]
+        (c/draw-image (config/get-object-image (type O)) x y C/OBJECT-SIZE C/OBJECT-SIZE)
         )
+    nil
     )
 
 (defn draw-frame
     "draws single frame"
     [t]
-    (cond
-        (state/level-completed?)
+    (let [state (state/get-state)]
+        (cond
+            (pred/level-completed? state)
             (do
                 (c/clear-canvas)
                 (c/draw-background)
                 (state/next-level)
                 )
-        (state/game-over?)
-           (do
-               (c/clear-canvas)
-               (c/draw-background))
-        :else
-              (if (not @state/paused?)
-                  (do
-                      (c/clear-canvas)
-                      (c/draw-background)
-                      (draw-player)
-                      (draw-falling-objects t)
-                      (state/set-last-timestamp t)
-                      (.requestAnimationFrame js/window draw-frame)
-                      )
-                  )
+            (pred/game-over? state)
+            (do
+                (c/clear-canvas)
+                (c/draw-background))
+            :else
+            (if (not @state/paused?); move to predicates
+                (let [new-state (update-falling-objects t state)]
+                    (c/clear-canvas)
+                    (c/draw-background)
+                    (draw-player new-state)
+                    (draw-falling-objects new-state)
+                    (state/set-state new-state)
+                    (.requestAnimationFrame js/window draw-frame)
+                    )
+                )
+            )
         )
     )
 
@@ -120,7 +125,7 @@
 
 (defn start-level
     []
-    (if (state/game-over? )
+    (if (pred/game-over? (state/get-state))
         (state/reset)
         )
     (set! (.-onmousemove c/canvas) #(state/move-player (calculate-player-x (.-offsetX %))))
@@ -133,7 +138,7 @@
 (state/init-level-state)
 (set! (.-onkeydown js/document) (fn [e]
                                   (if (and
-                                          (state/playing?)
+                                          (pred/playing? (state/get-state))
                                           (= (.-keyCode e) 32)
                                           )
                                       (do
@@ -147,14 +152,12 @@
                                   ))
 ;UI
 (defn game-ui []
-    (let [lives @state/lives
-          level @state/current-level
-          score @state/score
+    (let [{:keys [lives level score] :as state} (state/get-state)
           _ @state/level-state ; just to make sure ui component re-renders so it knows when level is over
-          game-over? (state/game-over?)
-          game-completed? (state/game-completed?)
-          level-completed? (state/level-completed?)
-          playing? (and (not game-over?) (not level-completed?) @state/started-game?)
+          game-over? (pred/game-over? state)
+          game-completed? (pred/game-completed? state)
+          level-completed? (pred/level-completed? state)
+          playing? (and (not game-over?) (not level-completed?) (:started-game? state))
           ]
         (println playing?)
         (cond

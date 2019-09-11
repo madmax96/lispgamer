@@ -1,6 +1,6 @@
 (ns game.state
   (:require [game.canvas :as c]
-            [game.utils :as u]
+            [game.constants :as C]
             [game.config :as config]
             [reagent.core :as r]
             )
@@ -9,36 +9,57 @@
 (defonce started-game? (atom false))
 (defonce current-level (r/atom 1))
 (defonce score (r/atom 0))
-(defonce lives (r/atom config/INITIAL-LIVES))
+(defonce lives (r/atom C/INITIAL-LIVES))
 (defonce level-state (r/atom {}))
 (defonce falling-objects (atom []))
 (defonce last-object-created-timestamp (atom 0))
 (defonce last-timestamp (atom 0))
 (defonce initial-player {
                          :x 0
-                         :y (- c/HEIGHT config/PLAYER-HEIGHT)
-                         :h config/PLAYER-HEIGHT
-                         :w config/PLAYER-WIDTH
-                         :img (.getElementById js/document "playerImage")
+                         :y (- c/HEIGHT C/PLAYER-HEIGHT)
+                         :h C/PLAYER-HEIGHT
+                         :w C/PLAYER-WIDTH
+                         :img C/PLAYER-IMG
                          })
+
+(defonce player (atom initial-player))
 (defonce paused? (atom false))
+
+
+(defn get-state
+  []
+  {
+   :started-game? @started-game?
+   :current-level @current-level
+   :score @score
+   :lives @lives
+   :level-state @level-state
+   :falling-objects @falling-objects
+   :last-object-created-timestamp @last-object-created-timestamp
+   :last-timestamp @last-timestamp
+   :player @player
+   :paused? @paused?
+   }
+  )
+
+(defn set-state
+  [{sg :started-game? cr :current-level scr :score l :lives
+           lst :level-state fo :falling-objects loct :last-object-created-timestamp
+           lt :last-timestamp p :player paused :paused?}]
+    (reset! started-game? sg)
+    (reset! current-level cr)
+    (reset! score scr)
+    (reset! lives l)
+    (reset! level-state lst)
+    (reset! falling-objects fo)
+    (reset! player p)
+  nil
+  )
 
 (defn toggle-pause
   []
   (reset! last-timestamp (.now js/performance))
   (reset! paused? (not @paused?))
-  )
-
-(defn continue
-  []
-  (reset! paused? false)
-  )
-
-(defonce player (atom initial-player))
-
-(defn update-player-width
-  [num]
-  (swap! player update :w + num)
   )
 
 (defn set-falling-objects
@@ -51,11 +72,6 @@
   (swap! player conj {:x x})
   )
 
-(defn decrement-lives
-  []
-  (swap! lives dec)
-  )
-
 (defn set-last-timestamp
   [t]
   (reset! last-timestamp t)
@@ -66,123 +82,9 @@
   (reset! last-object-created-timestamp t)
   )
 
-(defn update-score
-  [num]
-  (swap! score + num)
-  )
-
-;predicates
-(defn game-over?
-  []
-  (= 0 @lives)
-  )
-
-(defn level-completed?
-  []
-  (println "LEVEL COMPLETED "  (and (= 0 (count @falling-objects))
-                                    (= 0 (count (keys (:objects @level-state))))
-                                    ))
-  (and (= 0 (count @falling-objects))
-       (= 0 (count (keys (:objects @level-state))))
-       )
-  )
-
-(defn game-completed?
-  []
-  (println  "GAME COMPLETED " (= @current-level config/num-of-levels))
-
-  (and
-    (level-completed?)
-    (= @current-level config/num-of-levels)
-    )
-  )
-(defn playing?
-  []
-  (and
-    (not (game-over?))
-    (not (level-completed?))
-    @started-game?)
-  )
-(defn object-lost?
-  [object]
-  (let [{player-x :x w :w } @player {obj-x :x } object]
-     (not (and
-            (< player-x obj-x)
-            (>= (+ w player-x) (+ obj-x config/OBJECT-SIZE))
-            )
-          )
-    )
-  )
-
-(defn object-caught?
-  [object]
-  (not (object-lost? object))
-  )
-
-(defn object-at-boundary?
-  [{y :y}]
-  (> (+ y config/OBJECT-SIZE) (- c/HEIGHT (:h @player)))
-  )
-
-(defn create-object?
-  [t]
-  (let [{ [a b] :object-gen-interval objects :objects} @level-state
-        object-types (keys objects)
-        ]
-    (and
-      object-types
-      (or
-           (= @last-object-created-timestamp 0)
-           (> (- t @last-object-created-timestamp)
-              (u/rand-interval a b))
-           )
-      )
-    )
-  )
-
 (defn next-level
   []
-  (if (not (game-completed?))
     (swap! current-level inc)
-    )
-  )
-
-(defn- _create-object
-  [{objects :objects speed-factor :speed-factor}]
-  (let [
-        object-types (keys objects)
-        object-type (u/pick-random-el object-types)
-        {:keys [speed-range img]} (object-type config/falling-objects-config)
-        [a b] speed-range
-        base-speed (u/rand-interval a b)
-        speed (- base-speed speed-factor)
-        ]
-    {
-     :type object-type
-     :x (rand (- c/WIDTH config/OBJECT-SIZE))
-     :y 0
-     :img img
-     :time-to-travel speed
-     :pixels-to-travel c/HEIGHT
-     }
-    )
-  )
-
-(defn create-object
-  [t]
-    (let [l-state @level-state
-          new-object (_create-object l-state)
-          object-type (:type new-object)
-          objects (:objects l-state)
-          ]
-      (swap! falling-objects conj new-object)
-      (if (= 1 (object-type objects))
-        (swap! level-state update-in [:objects] dissoc object-type)
-        (swap! level-state update-in [:objects] update object-type dec)
-        )
-      (set-last-object-created-timestamp t)
-      new-object
-      )
   )
 
 (defn init-level-state
@@ -196,7 +98,7 @@
 (defn reset
   "resets game to initial state"
   []
-  (reset! lives config/INITIAL-LIVES)
+  (reset! lives C/INITIAL-LIVES)
   (reset! score 0)
   (reset! current-level 1)
   (reset! player initial-player)

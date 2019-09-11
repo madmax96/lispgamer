@@ -10,12 +10,11 @@
     )
   )
 
-(defonce background (.getElementById js/document "backgroundImage"))
 (defonce canvas (make-canvas (.getElementById js/document "gameContainer")))
 (defonce cx (.getContext canvas "2d"))
 (defonce WIDTH (.-width canvas))
 (defonce HEIGHT (.-height canvas))
-
+(defonce BACKGROUND (.getElementById js/document "backgroundImage"))
 (defn clear-canvas
   []
   (.clearRect cx 0 0 WIDTH HEIGHT)
@@ -23,7 +22,7 @@
 
 (defn draw-background
   []
-  (.drawImage cx background 0 0 WIDTH HEIGHT)
+  (.drawImage cx BACKGROUND 0 0 WIDTH HEIGHT)
   )
 
 (defn draw-image
