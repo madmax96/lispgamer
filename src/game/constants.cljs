@@ -23,4 +23,9 @@
 ;===========================================================================
 
 ;Sounds
-(defonce GOOD-CATCH-SOUND (.getElementById js/document "goodCaught"))
+(defonce GOOD-CATCH-SOUND (.getElementById js/document "goodCatchSound"))
+(defonce BAD-CATCH-SOUND (.getElementById js/document "badCatchSound"))
+(defonce BAD-DROP-SOUND (.getElementById js/document "badDropSound"))
+(defonce OBJECT-CREATED-SOUND (.getElementById js/document "objectCreatedSound"))
+(defonce LEVEL-COMPLETED-SOUND (.getElementById js/document "levelCompletedSound"))
+(defonce GAME-OVER-SOUND (.getElementById js/document "gameOverSound"))

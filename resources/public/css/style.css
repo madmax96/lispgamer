@@ -34,9 +34,17 @@
     font-weight: bold;
 }
 
-.level-completed h3{
+.level-completed,.game-completed{
     text-transform: uppercase;
     color: rgb( 28, 227, 125);
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 30px;
+}
+.game-over{
+    text-transform: uppercase;
+    color: darkred;
     font-weight: bold;
     text-align: center;
     margin-bottom: 10px;

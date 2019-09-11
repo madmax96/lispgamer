@@ -10,8 +10,23 @@
     <div id="app">
       <div style="display:none">
         <!-- Loading assetsa-->
-        <audio id="goodCaught" autoplay="false" hidden>
-          <source src="sounds/goodCaught.mp3" type="audio/mpeg">
+        <audio id="goodCatchSound" hidden preload="auto">
+          <source src="sounds/goodCatch.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="badCatchSound" hidden preload="auto">
+          <source src="sounds/badCatch.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="badDropSound" hidden preload="auto">
+          <source src="sounds/badDrop.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="objectCreatedSound" hidden preload="auto">
+          <source src="sounds/objectCreated.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="levelCompletedSound" hidden preload="auto">
+          <source src="sounds/levelCompleted.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="gameOverSound" hidden preload="auto">
+          <source src="sounds/gameOver.mp3" type="audio/mpeg">
         </audio>
         <img src="img/background5.jpeg" id="backgroundImage">
         <img src="img/object-bug.png" id="bugImage">

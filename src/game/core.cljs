@@ -12,62 +12,64 @@
 
 (enable-console-print!)
 
-;(defn create-object
-;    [t {level-state :level-state :as state}]
-;    (let [new-object (config/create-object level-state)
-;          object-type (type new-object)
-;          objects (:objects level-state)
-;          new-state (update-in state [:falling-objects] conj new-object)
-;          ]
-;
-;        (if (= 1 (get objects object-type))
-;            (swap! state/level-state update-in [:objects] dissoc object-type)
-;            (swap! state/level-state update-in [:objects] update object-type dec)
-;            )
-;        (state/set-last-object-created-timestamp t)
-;        new-object
-;        )
-;    )
-
-;(defn filter-and-handle
-;    [obj]
-;    (if (pred/object-at-boundary? obj (state/get-state))
-;        (if (pred/object-lost? obj (state/get-state))
-;            (do
-;                (state/set-state (config/whenObjectDrop obj (state/get-state)))
-;                (s/object-lost obj)
-;                false
-;                )
-;            (do
-;                (state/set-state (config/whenObjectCaught obj (state/get-state)))
-;                (s/object-caught obj)
-;                false
-;                )
-;            )
-;        true
-;        )
-;    )
-;TODO Refactor game playing? paused? ... can i use one variable ?
 (defn update-falling-objects
     [t {:keys [last-timestamp falling-objects level-state] :as state}]
     (let [time-difference (- t last-timestamp)
           {at-boundary true safe false} (group-by #(pred/object-at-boundary? % state) falling-objects)
-          {droped true caught false} (group-by #(pred/object-lost? % state) at-boundary)
+          {dropped true caught false} (group-by #(pred/object-lost? % state) at-boundary)
           moved-falling-objects  (map
                                         (fn [obj]
                                             (config/moveObject obj time-difference))
                                         safe
                                         )
-          ;Update all state that needs to be updated
+          s1 (reduce
+                 (fn [curr-state dropped-obj]
+                     (config/whenObjectDrop dropped-obj curr-state)
+                     )
+                    state
+                    dropped
+                     )
+          s2 (reduce
+                 (fn [curr-state caught-obj]
+                     (config/whenObjectCaught caught-obj curr-state))
+                 s1
+                 caught
+                 )
           ]
-        (if (pred/create-object? t state)
-            (let [new-object (config/create-object level-state)]
-                (s/object-created new-object)
-                ;(conj )
-                )
+        (let [s3 (conj s2 {
+                            :last-timestamp t
+                            :falling-objects moved-falling-objects
+                            })]
+          (if (pred/create-object? t state)
+            (let [new-object (config/create-object level-state)
+                  object-type (type new-object)
+                  level-objects (:objects level-state)
+                  falling-objects  (conj moved-falling-objects new-object)
+                  s4 (conj s3 {
+                               :last-object-created-timestamp t
+                               :falling-objects falling-objects
+                               })
+
+                  ]
+              (s/object-created new-object)
+              {
+               :new-state (if (= 1 (get level-objects object-type))
+                            (update-in s4 [:level-state :objects] dissoc object-type)
+                            (update-in s4 [:level-state :objects] update object-type dec)
+                            )
+               :dropped-objects dropped
+               :caught-objects caught
+               :created-object new-object
+               }
+              )
+            {
+             :new-state s3
+             :dropped-objects dropped
+             :caught-objects caught
+             }
             )
-        )
-    )
+          ))
+  )
 
 ;Drawing
 (defn draw-player
@@ -95,15 +97,25 @@
             (do
                 (c/clear-canvas)
                 (c/draw-background)
-                (state/next-level)
+                (s/level-completed)
                 )
             (pred/game-over? state)
             (do
-                (c/clear-canvas)
-                (c/draw-background))
+              (c/clear-canvas)
+              (c/draw-background)
+              (s/game-over)
+              )
             :else
-            (if (not @state/paused?); move to predicates
-                (let [new-state (update-falling-objects t state)]
+            (if (not @state/paused?)
+                (let [{:keys [new-state dropped-objects caught-objects created-object]} (update-falling-objects t state)]
+                    ;play sounds
+                    (doseq [o dropped-objects]
+                      (s/object-lost o)
+                      )
+                    (doseq [o caught-objects]
+                      (s/object-caught o)
+                      )
+                    (when created-object (s/object-created created-object))
                     (c/clear-canvas)
                     (c/draw-background)
                     (draw-player new-state)
@@ -117,18 +129,17 @@
     )
 
 (defn calculate-player-x
-    [offset-x]
-    (let [ {w :w} @state/player]
+    [offset-x {player :player}]
+    (let [ {w :w} player]
         (.min js/Math (.max js/Math 0 (- offset-x (/ w 2))) (- c/WIDTH w))
-        )
-    )
+        ))
 
 (defn start-level
     []
     (if (pred/game-over? (state/get-state))
         (state/reset)
         )
-    (set! (.-onmousemove c/canvas) #(state/move-player (calculate-player-x (.-offsetX %))))
+    (set! (.-onmousemove c/canvas) #(state/move-player (calculate-player-x (.-offsetX %) (state/get-state))))
     (reset! state/started-game? true)
     (state/init-level-state)
     (.requestAnimationFrame js/window draw-frame)
@@ -136,28 +147,28 @@
 
 (c/draw-background)
 (state/init-level-state)
-(set! (.-onkeydown js/document) (fn [e]
-                                  (if (and
-                                          (pred/playing? (state/get-state))
-                                          (= (.-keyCode e) 32)
-                                          )
-                                      (do
-                                          (state/toggle-pause)
-                                          (if @state/paused?
-                                              ()
-                                              (draw-frame (+ 1 @state/last-timestamp))
-                                              )
-                                          )
-                                      )
-                                  ))
+
+(defn handle-keydown
+  [event]
+  (when (and
+        (pred/playing? (state/get-state))
+        (= (.-keyCode event) 32)
+        )
+    (do
+      (state/toggle-pause)
+      (when (not @state/paused?) (draw-frame (+ 1 @state/last-timestamp)))
+        )
+      )
+    )
+(set! (.-onkeydown js/document) handle-keydown)
 ;UI
 (defn game-ui []
-    (let [{:keys [lives level score] :as state} (state/get-state)
+    (let [{:keys [lives current-level score] :as state} (state/get-state)
           _ @state/level-state ; just to make sure ui component re-renders so it knows when level is over
           game-over? (pred/game-over? state)
           game-completed? (pred/game-completed? state)
           level-completed? (pred/level-completed? state)
-          playing? (and (not game-over?) (not level-completed?) (:started-game? state))
+          playing? (pred/playing? state)
           ]
         (println playing?)
         (cond
@@ -172,7 +183,7 @@
                                   ])
             level-completed? (def menu [:div.menu
                                         [:p.level-completed "Level Completed"]
-                                        [:button {:on-click start-level} "Next Level"]
+                                        [:button {:on-click #(do (state/next-level) (start-level))} "Next Level"]
                                         ])
             :else (def menu [:div.menu
                               [:button {:on-click start-level} "Play"]
@@ -183,7 +194,7 @@
          [:div.game-info
           [:p "Lives: " lives]
           [:p "Score: " score]
-          [:p "Level: " level]]
+          [:p "Level: " current-level]]
             menu
          ]
         )

@@ -5,6 +5,7 @@
             [reagent.core :as r]
             )
   )
+
 ;Game Initial State
 (defonce started-game? (atom false))
 (defonce current-level (r/atom 1))
@@ -53,6 +54,8 @@
     (reset! level-state lst)
     (reset! falling-objects fo)
     (reset! player p)
+    (reset! last-object-created-timestamp loct)
+    (reset! last-timestamp lt)
   nil
   )
 
@@ -82,10 +85,7 @@
   (reset! last-object-created-timestamp t)
   )
 
-(defn next-level
-  []
-    (swap! current-level inc)
-  )
+
 
 (defn init-level-state
   []
@@ -95,6 +95,10 @@
   (reset! falling-objects [])
   )
 
+(defn next-level
+  []
+  (swap! current-level inc)
+  )
 (defn reset
   "resets game to initial state"
   []

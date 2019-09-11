@@ -4,29 +4,31 @@
             [game.constants :as C]
             )
   )
-
+;(def sound (let [A (.-Audio js/window)]
+;             (A. "sounds/goodCaught.mp3")
+;             ))
+;(.play sound)
 (defonce events-sound-map {
-                           :GOOD-LOST ""
-                           :GOOD-CAUGHT  C/GOOD-CATCH-SOUND
-                           :BAD-CAUGHT ""
-                           :OBJECT-CREATED ""
-                           :GAME-OVER ""
-                           :LEVEL-COMPLETED ""
+                           :GOOD-CATCH  C/GOOD-CATCH-SOUND
+                           :BAD-CATCH C/BAD-CATCH-SOUND
+                           :BAD-DROP C/BAD-DROP-SOUND
+                           :OBJECT-CREATED C/OBJECT-CREATED-SOUND
+                           :GAME-OVER C/GAME-OVER-SOUND
+                           :LEVEL-COMPLETED C/LEVEL-COMPLETED-SOUND
                            })
 
 (defn object-lost
   [object]
-  ;(if (config/good-object? (type object))
-  ;  (u/play-sound (:GOOD-LOST game.sound-sound-map))
-  ;  (u/play-sound (:BAD-LOST game.sound-sound-map))
-  ;  )
+  (if (config/good-object? (type object))
+    (u/play-sound (:BAD-DROP events-sound-map))
+    )
   )
 
 (defn object-caught
   [object]
   (if (config/good-object? (type object))
-    (u/play-sound (:GOOD-CAUGHT events-sound-map))
-    ;(u/play-sound (:BAD-CAUGHT game.sound-sound-map))
+    (u/play-sound (:GOOD-CATCH events-sound-map))
+    (u/play-sound (:BAD-CATCH events-sound-map))
     )
   )
 
@@ -42,5 +44,5 @@
 
 (defn object-created
   [object]
-  ;(u/play-sound (:OBJECT-CREATED game.sound-sound-map))
+  (u/play-sound (:OBJECT-CREATED events-sound-map))
   )

@@ -125,22 +125,22 @@
 
 (defonce levels-config [
                         {
-                         :objects {Bug 1 Lambda 1}
+                         :objects {Lambda 10 Bug 5}
                          :speed-factor 0
                          :object-gen-interval [1200 1800]
                          }
                         {
-                         :objects {Bug 1 Lambda 1 Rock 5}
+                         :objects {Bug 15 Lambda 20 Rock 5}
                          :speed-factor 100
                          :object-gen-interval [900 1500]
                          }
                         {
-                         :objects {Bug 2 Lambda 2 Rock 2}
+                         :objects {Bug 20 Lambda 20 Rock 15}
                          :speed-factor 200
                          :object-gen-interval [400 1200]
                          }
                         {
-                         :objects {Bug 2 Lambda 2 Rock 2}
+                         :objects {Bug 25 Lambda 20 Rock 20}
                          :speed-factor 300
                          :object-gen-interval [300 700]
                          }
