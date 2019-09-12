@@ -160,6 +160,7 @@
 
 (set! (.-onkeydown js/document) handle-keydown)
 ;UI
+(def show-instructions? (r/atom false))
 (defn game-ui []
     (let [{:keys [lives current-level score] :as state} (state/get-state)
           game-over? (pred/game-over? state)
@@ -182,15 +183,26 @@
                                    ]
                  :else [:div.menu
                         [:button {:on-click start-level} "Play"]
-                        [:button "Instructions"]
+                        [:button {:on-click #(reset! show-instructions? (not @show-instructions?))} "Instructions"]
                         ]
                  )
+            instructions (if @show-instructions? [:div.instructions
+                                                    :h1.title "LISPGAMER"
+                                                    :p "Welcome to LISPGAMER, game for brave LISP developers, made by one of that kind.
+                                                        As a LISPGAMER your job here will be to collect all lambdas that are throwed at you, and at the same time avoid nasty,boring bugs.
+                                                        If you lose more than 3 lambdas, sorry GAME OVER for you.
+                                                        Every time you collect lambda, your score goes up by 20.
+                                                        Every time you collect bug, your score goes down by 10, and you also shrink.
+                                                        GOOD LUCK
+                                                        "
+                                                  ] nil)
           ]
         [:div.ui-container
          [:div.game-info
           [:p "Lives: " lives]
           [:p "Score: " score]
           [:p "Level: " current-level]]
+            instructions
             menu
          ]
         )
