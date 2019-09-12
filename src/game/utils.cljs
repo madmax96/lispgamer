@@ -13,6 +13,18 @@
     )
   )
 
+(defn pick-random-el-by-frequencies
+  [elements frequencies]
+  (let [freq-sum (reduce + frequencies)
+        probabilities (map #(/ % freq-sum) frequencies)
+        cumulative-probability (reductions + probabilities)
+        r (rand)
+        i (.indexOf cumulative-probability (first (filter #(< r %) cumulative-probability)))
+        ]
+    (nth elements i)
+    )
+  )
+
 (defn play-sound
   "plays sound that corresponds to an event"
   [sound]

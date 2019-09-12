@@ -56,17 +56,17 @@
 
 (defonce OBJECT-CONSTANTS {
                            Lambda {
-                                   :speed-range [1300 2200]
+                                   :speed-range [1500 2500]
                                    :img C/LAMBDA-OBJECT-IMG
                                    :good? true
                                    }
                            Bug {
-                                :speed-range [900 1500]
+                                :speed-range [1300 2000]
                                 :img C/BUG-OBJECT-IMG
                                 :good? false
                                 }
                            Rock {
-                                 :speed-range [500 700]
+                                 :speed-range [600 1300]
                                  :img C/ROCK-OBJECT-IMG
                                  :good? false
                                  }
@@ -105,9 +105,7 @@
 
 (defn create-object
   [{objects :objects speed-factor :speed-factor}]
-  (let [
-        object-types (keys objects)
-        object-type (u/pick-random-el object-types)
+  (let [object-type (u/pick-random-el-by-frequencies (keys objects) (vals objects))
         speed-range (get-object-speed-range object-type)
         [a b] speed-range
         base-speed (u/rand-interval a b)
@@ -125,24 +123,29 @@
 
 (defonce levels-config [
                         {
-                         :objects {Lambda 1 Bug 5}
+                         :objects {Lambda 10 Bug 15}
                          :speed-factor 0
-                         :object-gen-interval [1200 1800]
+                         :object-gen-interval [500 1000]
                          }
                         {
-                         :objects {Bug 15 Lambda 20 Rock 5}
+                         :objects {Bug 20 Lambda 20 Rock 5}
                          :speed-factor 100
-                         :object-gen-interval [900 1500]
+                         :object-gen-interval [400 900]
                          }
                         {
-                         :objects {Bug 20 Lambda 20 Rock 15}
+                         :objects {Bug 20 Lambda 25 Rock 15}
                          :speed-factor 200
-                         :object-gen-interval [400 1200]
+                         :object-gen-interval [300 800]
                          }
                         {
-                         :objects {Bug 25 Lambda 20 Rock 20}
+                         :objects {Bug 25 Lambda 30 Rock 20}
                          :speed-factor 300
-                         :object-gen-interval [300 700]
+                         :object-gen-interval [200 700]
+                         }
+                        {
+                         :objects {Bug 30 Lambda 40 Rock 30}
+                         :speed-factor 400
+                         :object-gen-interval [100 600]
                          }
                         ])
 

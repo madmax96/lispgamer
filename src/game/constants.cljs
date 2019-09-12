@@ -7,7 +7,7 @@
 (defonce PLAYER-MIN-WIDTH (.round js/Math (* (/ 10 100) c/WIDTH)))
 (defonce PLAYER-MAX-WIDTH (.round js/Math (* (/ 60 100) c/WIDTH)))
 (defonce PLAYER-HEIGHT (.round js/Math (* (/ 8 100) c/HEIGHT)))
-(defonce INITIAL-LIVES 3)
+(defonce INITIAL-LIVES 5)
 (defonce GOOD-CATCH-SCORE-INCREASE 20)
 (defonce BAD-CATCH-SCORE-INCREASE -10)
 (defonce PLAYER-WIDTH-CHANGE  (.round js/Math (* (/ 2 100) c/WIDTH)))
