@@ -134,16 +134,16 @@
                          :speed-factor 100
                          :object-gen-interval [900 1500]
                          }
-                        ;{
-                        ; :objects {Bug 20 Lambda 20 Rock 15}
-                        ; :speed-factor 200
-                        ; :object-gen-interval [400 1200]
-                        ; }
-                        ;{
-                        ; :objects {Bug 25 Lambda 20 Rock 20}
-                        ; :speed-factor 300
-                        ; :object-gen-interval [300 700]
-                        ; }
+                        {
+                         :objects {Bug 20 Lambda 20 Rock 15}
+                         :speed-factor 200
+                         :object-gen-interval [400 1200]
+                         }
+                        {
+                         :objects {Bug 25 Lambda 20 Rock 20}
+                         :speed-factor 300
+                         :object-gen-interval [300 700]
+                         }
                         ])
 
 (defonce num-of-levels (count levels-config))
