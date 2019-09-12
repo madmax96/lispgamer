@@ -15,6 +15,7 @@
 (defonce WIDTH (.-width canvas))
 (defonce HEIGHT (.-height canvas))
 (defonce BACKGROUND (.getElementById js/document "backgroundImage"))
+
 (defn clear-canvas
   []
   (.clearRect cx 0 0 WIDTH HEIGHT)
@@ -22,6 +23,7 @@
 
 (defn draw-background
   []
+  (clear-canvas)
   (.drawImage cx BACKGROUND 0 0 WIDTH HEIGHT)
   )
 

@@ -4,10 +4,7 @@
             [game.constants :as C]
             )
   )
-;(def sound (let [A (.-Audio js/window)]
-;             (A. "sounds/goodCaught.mp3")
-;             ))
-;(.play sound)
+
 (defonce events-sound-map {
                            :GOOD-CATCH  C/GOOD-CATCH-SOUND
                            :BAD-CATCH C/BAD-CATCH-SOUND
@@ -43,6 +40,6 @@
   )
 
 (defn object-created
-  [object]
+  []
   (u/play-sound (:OBJECT-CREATED events-sound-map))
   )

@@ -6,8 +6,8 @@
             )
   )
 
-;Game Initial State
-(defonce started-game? (atom false))
+;Game State
+(defonce started-game? (r/atom false))
 (defonce current-level (r/atom 1))
 (defonce score (r/atom 0))
 (defonce lives (r/atom C/INITIAL-LIVES))
@@ -26,7 +26,6 @@
 (defonce player (atom initial-player))
 (defonce paused? (atom false))
 
-
 (defn get-state
   []
   {
@@ -39,15 +38,13 @@
    :last-object-created-timestamp @last-object-created-timestamp
    :last-timestamp @last-timestamp
    :player @player
-   :paused? @paused?
    }
   )
 
 (defn set-state
-  [{sg :started-game? cr :current-level scr :score l :lives
+  [{cr :current-level scr :score l :lives
            lst :level-state fo :falling-objects loct :last-object-created-timestamp
-           lt :last-timestamp p :player paused :paused?}]
-    (reset! started-game? sg)
+           lt :last-timestamp p :player}]
     (reset! current-level cr)
     (reset! score scr)
     (reset! lives l)
@@ -65,29 +62,17 @@
   (reset! paused? (not @paused?))
   )
 
-(defn set-falling-objects
-  [objects]
-    (reset! falling-objects objects)
-  )
-
 (defn move-player
   [x]
   (swap! player conj {:x x})
   )
 
-(defn set-last-timestamp
-  [t]
-  (reset! last-timestamp t)
+(defn next-level
+  []
+  (swap! current-level inc)
   )
 
-(defn set-last-object-created-timestamp
-  [t]
-  (reset! last-object-created-timestamp t)
-  )
-
-
-
-(defn init-level-state
+(defn reset-level-state
   []
   (reset! last-object-created-timestamp 0)
   (reset! last-timestamp 0)
@@ -95,11 +80,7 @@
   (reset! falling-objects [])
   )
 
-(defn next-level
-  []
-  (swap! current-level inc)
-  )
-(defn reset
+(defn reset-game-state
   "resets game to initial state"
   []
   (reset! lives C/INITIAL-LIVES)
@@ -107,5 +88,5 @@
   (reset! current-level 1)
   (reset! player initial-player)
   (reset! started-game? false)
-  (init-level-state)
+  (reset-level-state)
   )

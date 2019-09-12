@@ -71,6 +71,10 @@
                                  :good? false
                                  }
                            })
+(defn- get-constant-for-type
+  [constant type]
+  (constant (get OBJECT-CONSTANTS type))
+  )
 (defonce constructors
          {
           Bug map->Bug
@@ -79,15 +83,11 @@
           }
          )
 
-(defn- get-constant-for-type
-  [constant type]
-  (constant (get OBJECT-CONSTANTS type))
-  )
 (defn construct-object
   [object-type data]
-  (println object-type data)
   ((get constructors object-type) data)
   )
+
 (defn get-object-speed-range
   [object-type]
   (get-constant-for-type :speed-range object-type)
@@ -125,7 +125,7 @@
 
 (defonce levels-config [
                         {
-                         :objects {Lambda 10 Bug 5}
+                         :objects {Lambda 1 Bug 5}
                          :speed-factor 0
                          :object-gen-interval [1200 1800]
                          }
@@ -134,16 +134,16 @@
                          :speed-factor 100
                          :object-gen-interval [900 1500]
                          }
-                        {
-                         :objects {Bug 20 Lambda 20 Rock 15}
-                         :speed-factor 200
-                         :object-gen-interval [400 1200]
-                         }
-                        {
-                         :objects {Bug 25 Lambda 20 Rock 20}
-                         :speed-factor 300
-                         :object-gen-interval [300 700]
-                         }
+                        ;{
+                        ; :objects {Bug 20 Lambda 20 Rock 15}
+                        ; :speed-factor 200
+                        ; :object-gen-interval [400 1200]
+                        ; }
+                        ;{
+                        ; :objects {Bug 25 Lambda 20 Rock 20}
+                        ; :speed-factor 300
+                        ; :object-gen-interval [300 700]
+                        ; }
                         ])
 
 (defonce num-of-levels (count levels-config))

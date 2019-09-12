@@ -9,12 +9,30 @@
 #app{
     width: 100vw;
     height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 #gameContainer{
-    width: 100%;
+    width: 60%;
     height: 100%;
     position: absolute;
+}
+@media only screen and (max-width: 900px) {
+    #gameContainer {
+        width: 80%;
+    }
+}
+@media only screen and (max-width: 700px) {
+    #gameContainer {
+        width: 100%;
+    }
+}
+@media only screen and (min-width: 1800px) {
+    #gameContainer {
+        width: 50%;
+    }
 }
 .menu{
     position: absolute;
