@@ -1,6 +1,5 @@
 (ns game.constants
-  (:require [game.canvas :as c])
-  )
+  (:require [game.canvas :as c]))
 
 (defonce OBJECT-SIZE (.round js/Math (* (/ 5 100) c/WIDTH)))
 (defonce PLAYER-WIDTH (.round js/Math (* (/ 25 100) c/WIDTH)))

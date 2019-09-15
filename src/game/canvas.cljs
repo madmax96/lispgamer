@@ -6,9 +6,7 @@
     (set! (.-width canvas) (.-clientWidth parent-element))
     (set! (.-height canvas) (.-clientHeight parent-element))
     (.appendChild parent-element canvas)
-    canvas
-    )
-  )
+    canvas))
 
 (defonce canvas (make-canvas (.getElementById js/document "gameContainer")))
 (defonce cx (.getContext canvas "2d"))
@@ -18,17 +16,14 @@
 
 (defn clear-canvas
   []
-  (.clearRect cx 0 0 WIDTH HEIGHT)
-  )
+  (.clearRect cx 0 0 WIDTH HEIGHT))
 
 (defn draw-background
   []
   (clear-canvas)
-  (.drawImage cx BACKGROUND 0 0 WIDTH HEIGHT)
-  )
+  (.drawImage cx BACKGROUND 0 0 WIDTH HEIGHT))
 
 (defn draw-image
   [img x y w h]
-  (.drawImage cx img x y w h)
-  )
+  (.drawImage cx img x y w h))
 
