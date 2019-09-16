@@ -6,12 +6,12 @@
 
 (defn game-over?
   [{lives :lives}]
-  (= 0 lives))
+  (zero? lives))
 
 (defn level-completed?
   [{:keys [falling-objects level-state] :as state}]
-  (and (= 0 (count falling-objects))
-       (= 0 (count (keys (:objects level-state))))
+  (and (zero? (count falling-objects))
+       (zero? (count (keys (:objects level-state))))
        (not (game-over? state))))
 
 (defn game-completed?
@@ -49,6 +49,6 @@
     (and
      object-types
      (or
-      (= last-object-created-timestamp 0)
+      (zero? last-object-created-timestamp)
       (> (- t last-object-created-timestamp)
          (u/rand-interval a b))))))

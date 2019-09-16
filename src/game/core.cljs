@@ -110,9 +110,9 @@
   (when (and
          (pred/playing? (state/get-state))
          (= (.-keyCode event) 32))
-    (do
-      (state/toggle-pause)
-      (when (not @state/paused?) (draw-frame @state/last-timestamp)))))
+    (state/toggle-pause)
+    (when-not (deref state/paused?)
+      (draw-frame (deref state/last-timestamp)))))
 
 (defn start-level
   []

@@ -113,4 +113,4 @@
 
 (defn get-level-config
   [level]
-  (nth levels-config (- level 1)))
+  (nth levels-config (dec level)))

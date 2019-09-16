@@ -6,7 +6,7 @@
 
 (defn pick-random-el
   [coll]
-  (let [c (count coll) i (rand-interval 0 (- c 1))]
+  (let [c (count coll) i (rand-interval 0 (dec c))]
     (nth coll i)))
 
 (defn pick-random-el-by-frequencies
